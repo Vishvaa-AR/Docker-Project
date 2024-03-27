@@ -1,8 +1,8 @@
 pipeline {
 
   environment {
-    registry = "10.138.0.3:5001/mgsgoms/flask"
-    registry_mysql = "10.138.0.3:5001/mgsgoms/mysql"
+    registry = "vish/flask"
+    registry_mysql = "vish/mysql"
     dockerImage = ""
   }
 
@@ -11,7 +11,7 @@ pipeline {
   
     stage('Checkout Source') {
       steps {
-        git 'https://github.com/mgsgoms/Docker-Project.git'
+        git 'https://github.com/Vishvaa-AR/dockerfile.git'
       }
     }
 
@@ -23,12 +23,12 @@ pipeline {
       }
     }
 
-    stage('Push Image') {
+    stage('Push Flask Image') {
       steps{
         script {
-          docker.withRegistry( "" ) {
-            dockerImage.push()
-          }
+          withDockerRegistry([ credentialsId: "dockerhub2", url: "" ]) {
+            dockerImage.push()        
+           }
         }
       }
     }
@@ -42,10 +42,33 @@ pipeline {
    }
    stage('Build mysql image') {
      steps{
-       sh 'docker build -t "10.138.0.3:5001/mgsgoms/mysql:$BUILD_NUMBER"  "$WORKSPACE"/mysql'
-        sh 'docker push "10.138.0.3:5001/mgsgoms/mysql:$BUILD_NUMBER"'
+        script { 
+       withDockerRegistry([ credentialsId: "dockerhub2", url: "" ]) {
+       sh 'docker build -t "vish/mysql:$BUILD_NUMBER"  "$WORKSPACE"/mysql'
+       
+       sh 'docker push "vish/mysql:$BUILD_NUMBER"'
+        }
+      }}}
+      
+    stage('Push MySQL Image') {
+      steps{
+        script {
+          withDockerRegistry([ credentialsId: "dockerhub2", url: "" ]) {
+            dockerImage.push("registry_mysql")
+          }
         }
       }
+    }
+    //stage('Push MySQL Image') {
+    //  steps{
+    //    script {
+    //      withDockerRegistry([ credentialsId: "dockerhub2", url: "" ]) {
+    //        dockerImage.push('registry_mysql',)        
+     //      }
+     //   }
+     // }
+    // }
+    
     stage('Deploy App') {
       steps {
         script {
